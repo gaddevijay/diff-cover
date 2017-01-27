@@ -112,6 +112,13 @@ def parse_coverage_args(argv):
         help=IGNORE_UNSTAGED_HELP
     )
 
+    parser.add_argument(
+        '--diff-file',
+        type=str,
+        default=None,
+        help='Diff file'
+    )
+
     return vars(parser.parse_args(argv))
 
 
@@ -195,14 +202,21 @@ def parse_quality_args(argv):
         help=IGNORE_UNSTAGED_HELP
     )
 
+    parser.add_argument(
+        '--diff-file',
+        type=str,
+        default=None,
+        help='Diff file'
+    )
+
     return vars(parser.parse_args(argv))
 
 
-def generate_coverage_report(coverage_xml, compare_branch, html_report=None, css_file=None, ignore_unstaged=False):
+def generate_coverage_report(coverage_xml, compare_branch, html_report=None, css_file=None, ignore_unstaged=False, diff_file=None):
     """
     Generate the diff coverage report, using kwargs from `parse_args()`.
     """
-    diff = GitDiffReporter(compare_branch, git_diff=GitDiffTool(), ignore_unstaged=ignore_unstaged)
+    diff = GitDiffReporter(compare_branch, git_diff=GitDiffTool(diff_file=diff_file), ignore_unstaged=ignore_unstaged)
 
     xml_roots = [cElementTree.parse(xml_root) for xml_root in coverage_xml]
     coverage = XmlCoverageReporter(xml_roots)
@@ -227,11 +241,11 @@ def generate_coverage_report(coverage_xml, compare_branch, html_report=None, css
     return reporter.total_percent_covered()
 
 
-def generate_quality_report(tool, compare_branch, html_report=None, css_file=None, ignore_unstaged=False):
+def generate_quality_report(tool, compare_branch, html_report=None, css_file=None, ignore_unstaged=False, diff_file=None):
     """
     Generate the quality report, using kwargs from `parse_args()`.
     """
-    diff = GitDiffReporter(compare_branch, git_diff=GitDiffTool(), ignore_unstaged=ignore_unstaged)
+    diff = GitDiffReporter(compare_branch, git_diff=GitDiffTool(diff_file=diff_file), ignore_unstaged=ignore_unstaged)
 
     if html_report is not None:
         css_url = css_file
@@ -285,6 +299,7 @@ def main(argv=None, directory=None):
             html_report=arg_dict['html_report'],
             css_file=arg_dict['external_css_file'],
             ignore_unstaged=arg_dict['ignore_unstaged'],
+            diff_file=arg_dict['diff_file']
         )
 
         if percent_covered >= fail_under:
@@ -325,6 +340,7 @@ def main(argv=None, directory=None):
                     html_report=arg_dict['html_report'],
                     css_file=arg_dict['external_css_file'],
                     ignore_unstaged=arg_dict['ignore_unstaged'],
+                    diff_file=arg_dict['diff_file']
                 )
                 if percent_passing >= fail_under:
                     return 0
